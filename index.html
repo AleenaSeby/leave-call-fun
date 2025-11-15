@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scrambled Call</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        padding: 48px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .call-icon {
+        width: 80px;
+        height: 80px;
+        background: #4ade80;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.05);
+          opacity: 0.9;
+        }
+      }
+
+      .call-icon::before {
+        content: "📞";
+        font-size: 40px;
+      }
+
+      h1 {
+        font-size: 24px;
+        color: #1f2937;
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+
+      .instruction {
+        font-size: 16px;
+        color: #6b7280;
+        margin-bottom: 32px;
+        line-height: 1.5;
+      }
+
+      .input-wrapper {
+        position: relative;
+        margin-bottom: 16px;
+      }
+
+      input {
+        width: 100%;
+        padding: 16px 20px;
+        font-size: 18px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        outline: none;
+        transition: all 0.2s;
+        font-family: monospace;
+        letter-spacing: 1px;
+      }
+
+      input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      }
+
+      .output-display {
+        min-height: 60px;
+        padding: 16px 20px;
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        font-size: 20px;
+        font-family: monospace;
+        letter-spacing: 2px;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        word-break: break-all;
+        transition: all 0.3s;
+      }
+
+      .output-display.success {
+        background: #dcfce7;
+        border-color: #4ade80;
+        color: #166534;
+      }
+
+      .success-message {
+        display: none;
+        margin-top: 24px;
+      }
+
+      .success-message.show {
+        display: block;
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .success-icon {
+        width: 100px;
+        height: 100px;
+        background: #4ade80;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+      }
+
+      .success-icon::before {
+        content: "✓";
+        font-size: 60px;
+        color: white;
+        font-weight: bold;
+      }
+
+      .success-title {
+        font-size: 32px;
+        color: #166534;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .success-subtitle {
+        font-size: 18px;
+        color: #6b7280;
+      }
+
+      .hint {
+        margin-top: 16px;
+        font-size: 14px;
+        color: #9ca3af;
+        font-style: italic;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+    <meta property="og:image" content="https://bolt.new/static/og_default.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
+</head>
+  <body>
+    <div class="container">
+      <div id="callScreen">
+        <div class="call-icon"></div>
+        <h1>You are on a call</h1>
+        <p class="instruction">Type '<strong>leave call</strong>' to end the call.</p>
+
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="hiddenInput"
+            placeholder="Start typing..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="output-display" id="outputDisplay">
+          <span id="outputText"></span>
+        </div>
+
+        <p class="hint">Hint: The keyboard might not work as expected...</p>
+      </div>
+
+      <div class="success-message" id="successMessage">
+        <div class="success-icon"></div>
+        <div class="success-title">Call Ended!</div>
+        <p class="success-subtitle">You successfully ended the call.</p>
+      </div>
+    </div>
+
+    <script>
+      const keyMap = {
+        'a': 'q', 'b': 'w', 'c': 'e', 'd': 'r', 'e': 't',
+        'f': 'y', 'g': 'u', 'h': 'i', 'i': 'o', 'j': 'p',
+        'k': 'a', 'l': 's', 'm': 'd', 'n': 'f', 'o': 'g',
+        'p': 'h', 'q': 'j', 'r': 'k', 's': 'l', 't': 'z',
+        'u': 'x', 'v': 'c', 'w': 'v', 'x': 'b', 'y': 'n',
+        'z': 'm', ' ': ' '
+      };
+
+      const hiddenInput = document.getElementById('hiddenInput');
+      const outputText = document.getElementById('outputText');
+      const outputDisplay = document.getElementById('outputDisplay');
+      const callScreen = document.getElementById('callScreen');
+      const successMessage = document.getElementById('successMessage');
+
+      let scrambledOutput = '';
+
+      hiddenInput.addEventListener('input', (e) => {
+        const inputValue = e.target.value.toLowerCase();
+        scrambledOutput = '';
+
+        for (let char of inputValue) {
+          if (keyMap[char] !== undefined) {
+            scrambledOutput += keyMap[char];
+          } else {
+            scrambledOutput += char;
+          }
+        }
+
+        outputText.textContent = scrambledOutput || '';
+
+        if (scrambledOutput === 'leave call') {
+          outputDisplay.classList.add('success');
+          setTimeout(() => {
+            callScreen.classList.add('hidden');
+            successMessage.classList.add('show');
+          }, 500);
+        } else {
+          outputDisplay.classList.remove('success');
+        }
+      });
+
+      hiddenInput.focus();
+    </script>
+  </body>
+</html>
